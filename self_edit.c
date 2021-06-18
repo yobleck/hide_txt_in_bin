@@ -5,14 +5,18 @@
 #include <unistd.h>
 #include <gcrypt.h>
 
+void print_help(){
+    printf("HELP:\nr: to read hex data for file\nw: + string arg to write data to temp file");
+}
+
 void main(int argc, char *argv[]){
     
     char* pswd = crypt(getpass("input pass here:\n"), "$6$sult"); //$6$=sha512 TODO: $rounds=xxx$
     //printf("%s\n", pswd); //https://man7.org/linux/man-pages/man3/crypt.3.html
     
     //initialize gcrypt
-    char* ini_vec = "a test ini value";
-    char* key = "this is a key. 0123456789abcdefg";
+    char* ini_vec = "a test ini value"; //WARNING: this shouldn't be hard coded
+    char* key = "this is a key. 0123456789abcdefg"; //WARNING: this shouldn't be hard coded
     size_t key_len = gcry_cipher_get_algo_keylen(GCRY_CIPHER_AES256);
     printf("key len: %d\n", gcry_cipher_get_algo_keylen(GCRY_CIPHER_AES256));
     size_t blk_len = gcry_cipher_get_algo_blklen(GCRY_CIPHER_AES256);
@@ -77,19 +81,14 @@ void main(int argc, char *argv[]){
                     printf("\n");
                     
                     //decrypt file
-                    /*int temp_size = sizeof(buf)/sizeof(buf[0])-msg_index+256;
-                    printf("temp_size: %d\n", temp_size);
-                    char* encrypt_r = malloc(temp_size);
-                    for(int i = msg_index; i < size_f; i++){
-                        strcat(encrypt_r, &buf[i]);
-                    }*/ //TODO: FIGURE OUT MALLOC(SIZE OF THING)
-                    size_t temp_size = 16;
+                    printf("temp size: %d\n", sizeof(buf)/sizeof(buf[0])-msg_index);
+                    size_t temp_size = (size_t) sizeof(buf)/sizeof(buf[0])-msg_index; //16
                     rewind(f);
                     fseek(f, msg_index, SEEK_SET);
                     char encrypt_r[temp_size];
                     fread(encrypt_r, temp_size, 1, f);
                     printf("hidden text 2: %s\n", encrypt_r);
-                    char* output = malloc(temp_size); //TODO: some large number or calculate from encrypted text?
+                    char* output = malloc(temp_size);
                     
                     error = gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, 0);
                     printf("open error: "); printf(gcry_strerror(error)); printf("\n");
@@ -114,15 +113,16 @@ void main(int argc, char *argv[]){
             
             
             //write text to end of file
-            else if(!strcmp(argv[1],"w")){
+            else if(!strcmp(argv[1], "w")){
                 if(argc == 3){
                     
                     //encrypt input
-                    char* input = malloc( ((strlen(argv[2])/16)+1)*16-1 ); //all this is to make sure num_chrs % 16 == 0
-                    printf("%d\n", ((strlen(argv[2])/16)+1)*16-1);
-                    memset(input, '=', ((strlen(argv[2])/16)+1)*16-1); //TODO: need better filler character
+                    size_t padding = ((strlen(argv[2])/16)+1)*16-1;
+                    char* input = malloc(padding); //all this is to make sure num_chrs % 16 == 0
+                    printf("str len w/ pad: %d\n", padding);
+                    memset(input, '=', padding); //TODO: need better filler character https://stackoverflow.com/questions/13572253/
                     memcpy(input, argv[2], strlen(argv[2]));
-                    printf("%d", strlen(input));
+                    //printf("%d", strlen(input));
                     printf("\n");
 
                     size_t input_len = strlen(input)+1;
@@ -156,7 +156,6 @@ void main(int argc, char *argv[]){
                     printf("size of input file: %d\n", f_size);
                     rewind(f);
                     
-                    //TODO: convert argv[2] to aes?
                     //create file 2 and set size to file 1 + input arg len
                     //https://stackoverflow.com/questions/7775027/how-to-create-file-of-x-size
                     FILE* f2 = fopen("./output", "wb");
@@ -203,20 +202,24 @@ void main(int argc, char *argv[]){
             
             
             else if(!strcmp(argv[1],"h") || !strcmp(argv[1],"-h") || !strcmp(argv[1],"--help")){
-                printf("HELP:\nr: to read hex data for file\nw: to write data to temp file");
+                //printf("HELP:\nr: to read hex data for file\nw: string arg to write data to temp file");
+                print_help();
             }
             
             else{
-                printf("HELP:\nr: to read hex data for file\nw: to write data to temp file");
+                //printf("HELP:\nr: to read hex data for file\nw: string arg to write data to temp file");
+                print_help();
             }
         }
         
         else{
-            printf("HELP:\nr: to read hex data for file\nw: to write data to temp file");
+            //printf("HELP:\nr: to read hex data for file\nw: string arg to write data to temp file");
+            print_help();
         }
         
     } //end pass check
     else{
-        printf("ERROR: password did not match\nHELP:\nr: to read hex data for file\nw: to write data to temp file");
+        printf("ERROR: password did not match\n");
+        print_help();
     }
 }
