@@ -10,3 +10,10 @@ encryption is AES256. IV is `a test ini value`
 ## TODO:
 text is currently unencrypted
 doesn't overwrite properly (should the user just generate a new file every time?)
+
+## WARNING:
+this is an experiment/joke
+
+it is not intended for production use
+
+it will not protect you from the nsa
